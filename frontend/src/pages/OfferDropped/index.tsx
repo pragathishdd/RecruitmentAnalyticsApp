@@ -9,8 +9,6 @@ import OfferDropTrendChart from "../../components/charts/OfferDropTrendChart";
 
 import OfferOutcomeChart from "../../components/charts/OfferOutcomeChart";
 
-import OfferDropHikeImpactChart from "../../components/charts/OfferDropHikeImpactChart";
-
 
 export default function OfferDropped() {
 
@@ -573,46 +571,6 @@ offerDropCandidates.forEach(
 
   }
 );
-
-const topPatterns =
-  Object.entries(
-    offerDropPatterns
-  )
-    .map(
-      ([pattern, count]) => {
-
-        const [
-          vertical,
-          hikeBand,
-          noticeBand,
-          bonus,
-        ] =
-          pattern.split("|");
-
-        return {
-          vertical,
-          hikeBand,
-          noticeBand,
-          bonus,
-          count,
-
-          percentage:
-            Number(
-              (
-                (count /
-                  offerDropCandidates.length) *
-                100
-              ).toFixed(2)
-            ),
-        };
-
-      }
-    )
-    .sort(
-      (a, b) =>
-        b.count - a.count
-    )
-    .slice(0, 5);
 
 const profilePatterns: Record<
   string,
