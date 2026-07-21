@@ -16,7 +16,10 @@ interface Props {
 
   recruiters: string[];
   verticals: string[];
+
+  disableStatus?: boolean;
 }
+
 
 export default function GlobalFilters({
   recruiter,
@@ -31,6 +34,8 @@ export default function GlobalFilters({
   setToDate,
   recruiters,
   verticals,
+  disableStatus,
+
 }: Props) {
   return (
     <div className="bg-white rounded-xl shadow p-4">
@@ -83,13 +88,20 @@ export default function GlobalFilters({
           ))}
         </select>
 
+        
         <select
-          value={taStatus}
-          onChange={(e) =>
+            value={taStatus}
+            onChange={(e) =>
             setTaStatus(e.target.value)
-          }
-          className="border p-2 rounded"
+            }
+            disabled={disableStatus}
+            className={`border p-2 rounded ${
+            disableStatus
+             ? "bg-gray-100 cursor-not-allowed"
+            : ""
+            }`}
         >
+
           <option value="">
             All Status
           </option>

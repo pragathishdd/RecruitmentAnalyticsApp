@@ -1,12 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { getDashboardData } from "../../utils/storage";
+
+import {
+  getDashboardData
+} from "../../services/api";
+
 
 import GlobalFilters from "../../components/common/GlobalFilters";
 
 export default function TAT() {
-  const data = getDashboardData();
+  const [data, setData] =
+  useState<any>({
+    records: []
+  });
+
+useEffect(() => {
+
+  getDashboardData()
+    .then(setData);
+
+}, []);
 
 const tat =
   data?.tat_metrics;
@@ -219,7 +233,7 @@ const getStageColor = (
 };
 
 const healthLabel =
-  tat.total_tat <= 30
+  data.total_tat <= 30
     ? "Healthy"
     : tat.total_tat <= 45
     ? "Moderate"

@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { getDashboardData } from "../../utils/storage";
+
+import {
+  getDashboardData
+} from "../../services/api";
+
 
 import GlobalFilters from "../../components/common/GlobalFilters";
 import DiversityGenderChart from "../../components/charts/DiversityGenderChart";
@@ -11,7 +15,18 @@ from "../../components/charts/DiversityTrendChart";
 
 
 export default function Diversity() {
-  const data = getDashboardData();
+  
+  const [data, setData] =
+  useState<any>({
+    records: []
+  });
+
+useEffect(() => {
+
+  getDashboardData()
+    .then(setData);
+
+}, []);
 
   const [recruiterFilter, setRecruiterFilter] =
     useState("");

@@ -18,8 +18,13 @@ const menuItems = [
   path: "/joined",
   },
  {
-    label: "Offer Dropped",
+    label: "Dropped Analysis",
     path: "/offer-dropped",
+  },
+
+{
+    label: "Decision Intelligence",
+    path: "/decision-intelligence",
   },
 
 ];

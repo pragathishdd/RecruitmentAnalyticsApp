@@ -1,43 +1,72 @@
 from fastapi import FastAPI
 
-from fastapi.middleware.cors import (
-    CORSMiddleware
+from app.database import Base
+from app.database import engine
+from app.routers.auth import router as auth_router
+from fastapi.middleware.cors import CORSMiddleware
+from app.database import SessionLocal
+
+from app.routers.dashboard import (
+    router as dashboard_router
 )
 
-from app.api.upload import (
+from app.routers.upload import (
     router as upload_router
+)
+
+import app.models
+
+Base.metadata.create_all(
+    bind=engine
 )
 
 app = FastAPI()
 
+app.include_router(
+    upload_router
+)
+
+
+app.include_router(
+    dashboard_router
+)
+
+
 app.add_middleware(
     CORSMiddleware,
-
     allow_origins=[
-        "http://localhost:5182",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-        "http://localhost:5177",
-        "http://localhost:5178",
-        "http://localhost:5179"
-        "http://localhost:5180",
-        "http://localhost:5181",
-        "http://localhost:5182",
-        "http://localhost:5183",
-        "http://localhost:5184",
+        "http://localhost:5173"
     ],
-
     allow_credentials=True,
-
     allow_methods=["*"],
-
     allow_headers=["*"],
 )
 
+
 app.include_router(
-    upload_router,
-    prefix="/api/upload",
-    tags=["Upload"]
+    auth_router
 )
+
+
+@app.get("/")
+def health():
+    return {
+        "message":
+        "Recruitment Analytics API Running"
+    }
+
+
+@app.get("/db-test")
+def db_test():
+
+    db = SessionLocal()
+
+    try:
+        db.execute("SELECT 1")
+        return {"status": "connected"}
+
+    except Exception as e:
+        return {"error": str(e)}
+
+    finally:
+        db.close()

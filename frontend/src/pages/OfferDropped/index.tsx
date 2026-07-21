@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { getDashboardData } from "../../utils/storage";
+
+import {
+  getDashboardData
+}
+from "../../services/api";
+
 
 import GlobalFilters from "../../components/common/GlobalFilters";
 
@@ -12,8 +17,17 @@ import OfferOutcomeChart from "../../components/charts/OfferOutcomeChart";
 
 export default function OfferDropped() {
 
-  const data =
-    getDashboardData();
+  const [data, setData] =
+  useState<any>({
+    records: []
+  });
+
+useEffect(() => {
+
+  getDashboardData()
+    .then(setData);
+
+}, []);
 
   const records =
     data?.records || [];
@@ -24,8 +38,12 @@ export default function OfferDropped() {
   const [verticalFilter, setVerticalFilter] =
     useState("");
 
-  const [taStatusFilter, setTaStatusFilter] =
-    useState("");
+  
+const [
+  taStatusFilter,
+  setTaStatusFilter,
+] = useState("Offer Dropped");
+
 
   const [fromDate, setFromDate] =
     useState("");
@@ -412,383 +430,281 @@ const offerDropCandidates =
       "offer dropped"
   );
 
-  const hikeAnalysis = [
-  {
-    bucket: "0-10%",
-    count: 0,
-  },
-  {
-    bucket: "10-20%",
-    count: 0,
-  },
-  {
-    bucket: "20-30%",
-    count: 0,
-  },
-  {
-    bucket: "30-40%",
-    count: 0,
-  },
-  {
-    bucket: "40%+",
-    count: 0,
-  },
-];
 
-offerDropCandidates.forEach(
-  (row: any) => {
+const totalDrops =
+  offerDropCandidates.length;
 
-    const current =
-      Number(
-        row["Current CTC"] || 0
-      );
+const riskDrivers: {
+  driver: string;
+  count: number;
+  percentage: number;
+  recommendation: string;
+}[] = [];
 
-    const offered =
-      Number(
-        row["Offered CTC LPA"] ||
-        0
-      );
+const addDriver = (
+  driver: string,
+  count: number,
+  recommendation: string
+) => {
 
-    if (
-      !current ||
-      !offered
-    ) {
-      return;
-    }
+  if (!totalDrops) return;
 
-    const hike =
+  riskDrivers.push({
+    driver,
+    count,
+    percentage: Number(
       (
-        (offered - current) /
-        current
-      ) *
-      100;
+        (count /
+          totalDrops) *
+        100
+      ).toFixed(2)
+    ),
+    recommendation,
+  });
 
-    if (hike < 10) {
-      hikeAnalysis[0].count++;
-    } else if (hike < 20) {
-      hikeAnalysis[1].count++;
-    } else if (hike < 30) {
-      hikeAnalysis[2].count++;
-    } else if (hike < 40) {
-      hikeAnalysis[3].count++;
-    } else {
-      hikeAnalysis[4].count++;
+};
+
+const expectedGapCount =
+  offerDropCandidates.filter(
+    (row: any) => {
+
+      const expected =
+        Number(
+          row["Expected CTC"] || 0
+        );
+
+      const offered =
+        Number(
+          row["Offered CTC LPA"] || 0
+        );
+
+      return (
+        expected > 0 &&
+        offered > 0 &&
+        offered < expected
+      );
+
     }
+  ).length;
 
-  }
+addDriver(
+  "Expected Compensation Gap",
+  expectedGapCount,
+  "Offered compensation is below candidate expectations. Review compensation competitiveness."
 );
 
-const offerDropPatterns: Record<
-  string,
-  number
-> = {};
-
-offerDropCandidates.forEach(
-  (row: any) => {
-
-    const currentCtc =
-      Number(row["Current CTC"] || 0);
-
-    const offeredCtc =
-      Number(
-        row["Offered CTC LPA"] || 0
-      );
-
-    const noticePeriod =
+const longNoticeCount =
+  offerDropCandidates.filter(
+    (row: any) =>
       Number(
         row["Notice Period"] || 0
-      );
+      ) > 60
+  ).length;
 
-    const vertical =
-      row["Vertical"] || "Unknown";
+addDriver(
+  "Notice Period Above 60 Days",
+  longNoticeCount,
+  "Long notice periods increase counter-offer risk. Introduce buyout and engagement plans."
+);
 
-    const bonus =
-      String(
+const noBonusCount =
+  offerDropCandidates.filter(
+    (row: any) =>
+      !String(
         row["One Time Bonus"] || ""
       )
         .toLowerCase()
         .includes("yes")
-        ? "Bonus Yes"
-        : "Bonus No";
+  ).length;
 
-    let hikeBand =
-      "Unknown";
+addDriver(
+  "No Joining Bonus",
+  noBonusCount,
+  "Consider joining bonuses for hard-to-hire talent."
+);
 
-    if (
-      currentCtc > 0 &&
-      offeredCtc > 0
-    ) {
+const lowHikeCount =
+  offerDropCandidates.filter(
+    (row: any) => {
+
+      const current =
+        Number(
+          row["Current CTC"] || 0
+        );
+
+      const offered =
+        Number(
+          row["Offered CTC LPA"] || 0
+        );
+
+      if (
+        !current ||
+        !offered
+      ) {
+        return false;
+      }
 
       const hike =
         (
           (
-            offeredCtc -
-            currentCtc
+            offered -
+            current
           ) /
-          currentCtc
-        ) *
-        100;
+          current
+        ) * 100;
 
-      if (hike < 20) {
-        hikeBand = "<20%";
-      } else if (hike < 50) {
-        hikeBand = "20-50%";
-      } else {
-        hikeBand = "50%+";
-      }
+      return hike < 20;
 
     }
+  ).length;
 
-    let noticeBand =
-      "0-30 Days";
-
-    if (noticePeriod > 60) {
-      noticeBand =
-        "60+ Days";
-    } else if (
-      noticePeriod > 30
-    ) {
-      noticeBand =
-        "30-60 Days";
-    }
-
-    const pattern =
-      [
-        vertical,
-        hikeBand,
-        noticeBand,
-        bonus,
-      ].join("|");
-
-    offerDropPatterns[
-      pattern
-    ] =
-      (
-        offerDropPatterns[
-          pattern
-        ] || 0
-      ) + 1;
-
-  }
+addDriver(
+  "Low Hike (<20%)",
+  lowHikeCount,
+  "Candidates receiving limited hikes show higher drop probability."
 );
 
-const profilePatterns: Record<
+const noGrowthCount =
+  offerDropCandidates.filter(
+    (row: any) =>
+      String(
+        row["Current Designation"] || ""
+      ).trim() ===
+      String(
+        row["Offered Designation"] || ""
+      ).trim()
+  ).length;
+
+addDriver(
+  "No Designation Progression",
+  noGrowthCount,
+  "Career progression expectations may not be satisfied."
+);
+
+const locationMismatchCount =
+  offerDropCandidates.filter(
+    (row: any) => {
+
+      const current =
+        String(
+          row["Current Location"] || ""
+        )
+          .toLowerCase()
+          .trim();
+
+      const preferred =
+        String(
+          row["Preferred Location"] || ""
+        )
+          .toLowerCase()
+          .trim();
+
+      return (
+        current &&
+        preferred &&
+        current !== preferred
+      );
+
+    }
+  ).length;
+
+addDriver(
+  "Location Preference Mismatch",
+  locationMismatchCount,
+  "Location alignment should be discussed earlier in the process."
+);
+
+const verticalMap: Record<
   string,
   number
 > = {};
 
 offerDropCandidates.forEach(
   (row: any) => {
-
-    const currentCtc =
-      Number(
-        row["Current CTC"] || 0
-      );
-
-    const offeredCtc =
-      Number(
-        row["Offered CTC LPA"] || 0
-      );
-
-    let hikeBand = "Unknown";
-
-    if (
-      currentCtc > 0 &&
-      offeredCtc > 0
-    ) {
-
-      const hike =
-        (
-          (
-            offeredCtc -
-            currentCtc
-          ) /
-          currentCtc
-        ) * 100;
-
-      if (hike < 20) {
-        hikeBand = "<20%";
-      } else if (hike < 50) {
-        hikeBand = "20-50%";
-      } else {
-        hikeBand = "50%+";
-      }
-    }
-
-    const notice =
-      Number(
-        row["Notice Period"] || 0
-      );
-
-    let noticeBand =
-      "0-30 Days";
-
-    if (notice > 60) {
-      noticeBand =
-        "60+ Days";
-    } else if (notice > 30) {
-      noticeBand =
-        "30-60 Days";
-    }
 
     const vertical =
       row["Vertical"] ||
       "Unknown";
 
-    const company =
-      row["Current Company"] ||
-      "Unknown";
-
-    const designation =
-      row[
-        "Current Designation"
-      ] || "Unknown";
-
-    const offeredDesignation =
-      row[
-        "Offered Designation"
-      ] || "Unknown";
-
-    const bonus =
-      String(
-        row["One Time Bonus"] || ""
-      )
-        .toLowerCase()
-        .includes("yes")
-        ? "Bonus Yes"
-        : "Bonus No";
-
-    const location =
-      row["Current Location"] ||
-      "Unknown";
-
-    const pattern =
-      [
-        vertical,
-        company,
-        designation,
-        offeredDesignation,
-        hikeBand,
-        noticeBand,
-        bonus,
-        location,
-      ].join("|");
-
-    profilePatterns[
-      pattern
+    verticalMap[
+      vertical
     ] =
       (
-        profilePatterns[
-          pattern
+        verticalMap[
+          vertical
         ] || 0
       ) + 1;
 
   }
 );
 
-const topProfiles =
-  Object.entries(
-    profilePatterns
-  )
-    .map(
-      ([pattern, count]) => {
+const topVertical =
+  Object.entries(verticalMap)
+    .sort(
+      (a, b) =>
+        b[1] - a[1]
+    )[0];
 
-        const [
-          vertical,
-          company,
-          designation,
-          offeredDesignation,
-          hikeBand,
-          noticeBand,
-          bonus,
-          location,
-        ] =
-          pattern.split("|");
+if (topVertical) {
 
-        return {
-          vertical,
-          company,
-          designation,
-          offeredDesignation,
-          hikeBand,
-          noticeBand,
-          bonus,
-          location,
-          count,
+  addDriver(
+    `High Risk Vertical: ${topVertical[0]}`,
+    topVertical[1],
+    "Focus retention strategy for this vertical."
+  );
 
-          percentage:
-            Number(
-              (
-                (
-                  count /
-                  offerDropCandidates.length
-                ) *
-                100
-              ).toFixed(2)
-            ),
-        };
+}
 
-      }
-    )
+const companyMap: Record<
+  string,
+  number
+> = {};
+
+offerDropCandidates.forEach(
+  (row: any) => {
+
+    const company =
+      row["Current Company"] ||
+      "Unknown";
+
+    companyMap[
+      company
+    ] =
+      (
+        companyMap[
+          company
+        ] || 0
+      ) + 1;
+
+  }
+);
+
+const topCompany =
+  Object.entries(companyMap)
+    .sort(
+      (a, b) =>
+        b[1] - a[1]
+    )[0];
+
+if (topCompany) {
+
+  addDriver(
+    `Company Risk: ${topCompany[0]}`,
+    topCompany[1],
+    "Candidates from this company show elevated offer-drop risk."
+  );
+
+}
+
+const topDrivers =
+  riskDrivers
     .sort(
       (a, b) =>
         b.count - a.count
     )
-    .slice(0, 5);
+    .slice(0, 10);
 
-  const generateRecommendation =
-  (item: any) => {
 
-    const recommendations = [];
-
-    if (
-      item.noticeBand ===
-      "60+ Days"
-    ) {
-      recommendations.push(
-        "Provide buyout or notice-period reduction support."
-      );
-    }
-
-    if (
-      item.hikeBand ===
-      "<20%"
-    ) {
-      recommendations.push(
-        "Review compensation benchmark and target higher hikes."
-      );
-    }
-
-    if (
-      item.bonus ===
-      "Bonus No"
-    ) {
-      recommendations.push(
-        "Consider introducing a joining bonus."
-      );
-    }
-
-    if (
-      item.designation ===
-      item.offeredDesignation
-    ) {
-      recommendations.push(
-        "Offer stronger career progression or title elevation."
-      );
-    }
-
-    if (
-      recommendations.length === 0
-    ) {
-      recommendations.push(
-        "Strengthen candidate engagement and pre-joining communication."
-      );
-    }
-
-    return recommendations.join(
-      " "
-    );
-  };
 
   return (
     <DashboardLayout>
@@ -854,6 +770,7 @@ const topProfiles =
           setFromDate={setFromDate}
           toDate={toDate}
           setToDate={setToDate}
+          disableStatus={true}
           recruiters={recruiters}
           verticals={verticals}
         />
@@ -1072,14 +989,12 @@ const topProfiles =
 <div className="mt-8 bg-white rounded-xl shadow p-6">
 
   <h2 className="text-2xl font-bold mb-6">
-
-    Offer Drop Intelligence Engine
-
+    Offer Drop Root Cause Analysis
   </h2>
 
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div className="space-y-4">
 
-    {topProfiles.map(
+    {topDrivers.map(
       (
         item,
         index
@@ -1087,123 +1002,34 @@ const topProfiles =
 
         <div
           key={index}
-          className="border rounded-xl p-5"
+          className="border rounded-xl p-4"
         >
 
-          <div className="text-xl font-bold mb-3 text-red-600">
+          <div className="flex justify-between">
 
-            Driver #{index + 1}
+            <div className="font-bold text-lg">
 
-          </div>
+              {index + 1}. {item.driver}
 
-          <div>
+            </div>
 
-            <strong>
-              Vertical:
-            </strong>{" "}
+            <div className="font-bold text-red-600">
 
-            {item.vertical}
+              {item.count}
+              {" "}
+              Candidates
 
-          </div>
+              {" • "}
 
-          <div>
+              {item.percentage}%
 
-            <strong>
-              Current Company:
-            </strong>{" "}
-
-            {item.company}
+            </div>
 
           </div>
 
-          <div>
+          <div className="mt-2 text-gray-600">
 
-            <strong>
-              Current Designation:
-            </strong>{" "}
-
-            {item.designation}
-
-          </div>
-
-          <div>
-
-            <strong>
-              Offered Designation:
-            </strong>{" "}
-
-            {item.offeredDesignation}
-
-          </div>
-
-          <div>
-
-            <strong>
-              Current Location:
-            </strong>{" "}
-
-            {item.location}
-
-          </div>
-
-          <div>
-
-            <strong>
-              Hike:
-            </strong>{" "}
-
-            {item.hikeBand}
-
-          </div>
-
-          <div>
-
-            <strong>
-              Notice:
-            </strong>{" "}
-
-            {item.noticeBand}
-
-          </div>
-
-          <div>
-
-            <strong>
-              Bonus:
-            </strong>{" "}
-
-            {item.bonus}
-
-          </div>
-
-          <div className="mt-3 font-bold text-red-600">
-
-            {item.count}
-            {" "}
-            Candidates
-
-            {" • "}
-
-            {item.percentage}%
-
-            {" "}
-            of all Offer Drops
-
-          </div>
-
-          <div className="mt-4 bg-gray-50 rounded-lg p-3 text-sm">
-
-            <strong>
-              Recommendation:
-            </strong>
-
-            <br />
-
-            {
-              generateRecommendation(
-                item
-              )
-            }
+            {item.recommendation}
 
           </div>
 

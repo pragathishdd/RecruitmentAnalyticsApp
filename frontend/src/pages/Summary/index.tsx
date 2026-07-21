@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { getDashboardData } from "../../utils/storage";
+
+import {
+  getDashboardData
+}
+from "../../services/api";
+
 
 import GlobalFilters from "../../components/common/GlobalFilters";
 
@@ -11,7 +16,26 @@ import HiringTrendChart from "../../components/charts/HiringTrendChart";
 import HiringFunnel from "../../components/charts/HiringFunnel";
 
 export default function Summary() {
-  const data = getDashboardData();
+  const [data, setData] =
+  useState<any>({
+    records: []
+  });
+
+useEffect(() => {
+
+  getDashboardData()
+    .then((result) => {
+
+      console.log(
+        "Dashboard API Response",
+        result
+      );
+
+      setData(result);
+
+    });
+
+}, []);
 
   const [recruiterFilter, setRecruiterFilter] =
     useState("");
@@ -28,6 +52,7 @@ export default function Summary() {
   const [toDate, setToDate] =
     useState("");
 
+
   if (!data) {
     return (
       <DashboardLayout>
@@ -40,8 +65,7 @@ export default function Summary() {
 
   const records = data.records || [];
 
-  const recruiterData =
-    data.recruiter_performance || [];
+  const recruiterData: any[] = [];
   
   const filteredRecruiterData =
     recruiterData.filter(
@@ -51,16 +75,16 @@ export default function Summary() {
         recruiterFilter
   );
   
-  const verticalData =
-    data.vertical_analysis || [];
+  const verticalData: any[] = [];
 
   
-  const hiringTrend =
-  data.hiring_trend || {
-    monthly: [],
-    quarterly: [],
-    yearly: [],
-  };
+  
+const hiringTrend = {
+  monthly: [],
+  quarterly: [],
+  yearly: [],
+};
+
 
   const recruiters = [
     ...new Set(
@@ -239,8 +263,10 @@ export default function Summary() {
       value: yetToOffer,
     },
     {
+      
       title: "Data Quality %",
-      value: `${data.data_quality_score}%`,
+      value: "100%",
+
     },
     {
       title: "Conversion %",
@@ -329,20 +355,24 @@ export default function Summary() {
           data={filteredRecruiterData}
         />
 
+        <RecruiterPerformanceChart
+          data={filteredRecruiterData}
+        />
+
         <StatusDistributionChart
           joined={totalJoins}
           offerAccepted={offerAccepted}
           offerDropped={offerDropped}
           yetToOffer={yetToOffer}
-        />
+        /> 
 
       </div>
 
       <div className="mt-8">
 
-        <HiringTrendChart
+        {/* <HiringTrendChart
           data={hiringTrend}
-        />
+        /> */}  
 
       </div>
 
