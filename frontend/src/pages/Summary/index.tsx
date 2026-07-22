@@ -370,9 +370,9 @@ const hiringTrend = {
 
       <div className="mt-8">
 
-        {/* <HiringTrendChart
+        <HiringTrendChart
           data={hiringTrend}
-        /> */}  
+        />
 
       </div>
 
