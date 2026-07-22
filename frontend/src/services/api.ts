@@ -1,9 +1,11 @@
+const API_URL =
+  import.meta.env.VITE_API_URL;
 
 export async function getDashboardData() {
 
   const response =
     await fetch(
-      "https://recruitmentanalyticsapp.onrender.com/dashboard/records"
+      `${API_URL}/dashboard/records`
     );
 
   return await response.json();

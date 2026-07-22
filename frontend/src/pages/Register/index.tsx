@@ -3,6 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function Register() {
 
+
+const API_URL =
+  import.meta.env.VITE_API_URL;
+
+
   const navigate =
     useNavigate();
 
@@ -47,7 +52,7 @@ export default function Register() {
 
     const response =
       await fetch(
-        "https://recruitmentanalyticsapp.onrender.com/auth/register",
+          `${API_URL}/auth/register`
         {
           method: "POST",
           headers: {

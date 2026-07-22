@@ -4,6 +4,11 @@ import { useNavigate } from "react-router-dom";
 
 export default function Upload() {
 
+
+const API_URL =
+  import.meta.env.VITE_API_URL;
+
+
   const [file, setFile] =
     useState<File | null>(null);
 
@@ -38,7 +43,7 @@ export default function Upload() {
 
       const response =
         await axios.post(
-          "https://recruitmentanalyticsapp.onrender.com/upload/excel",
+          `${API_URL}/upload/excel`,
           formData,
           {
             headers: {
