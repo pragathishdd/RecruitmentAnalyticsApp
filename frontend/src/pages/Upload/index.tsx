@@ -38,7 +38,7 @@ export default function Upload() {
 
       const response =
         await axios.post(
-          "http://127.0.0.1:8000/upload/excel",
+          "https://recruitmentanalyticsapp.onrender.com/upload/excel",
           formData,
           {
             headers: {

@@ -47,7 +47,7 @@ export default function Register() {
 
     const response =
       await fetch(
-        "http://127.0.0.1:8000/auth/register",
+        "https://recruitmentanalyticsapp.onrender.com/auth/register",
         {
           method: "POST",
           headers: {
