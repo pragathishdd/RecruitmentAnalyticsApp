@@ -42,7 +42,7 @@ useEffect(() => {
 const [
   taStatusFilter,
   setTaStatusFilter,
-   ] = useState("Joined");
+   ] = useState("");
 
 
   const [
@@ -119,7 +119,7 @@ const [
         )
           .toLowerCase()
           .trim() ===
-        "joined"
+        ""
     );
 
   const totalJoined =
